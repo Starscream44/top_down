@@ -10,5 +10,6 @@ public class TopDownTarget : TargetRules
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.Add("TopDown");
-	}
+       
+    }
 }

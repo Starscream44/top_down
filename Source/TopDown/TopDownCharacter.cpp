@@ -9,6 +9,8 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
+#include "Kismet/GamePlayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
 
@@ -88,4 +90,39 @@ void ATopDownCharacter::Tick(float DeltaSeconds)
 			CursorToWorld->SetWorldRotation(CursorR);
 		}
 	}
+	MovementTick(DeltaSeconds);
+}
+
+void ATopDownCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAxis("MoveForward", this, &ATopDownCharacter::InputAxisX);
+	PlayerInputComponent->BindAxis("MoveRight", this, &ATopDownCharacter::InputAxisY);
+}
+
+
+void ATopDownCharacter::InputAxisX(float Value)
+{
+	AxisX = Value;
+}
+
+void ATopDownCharacter::InputAxisY(float Value)
+{
+	AxisY = Value;
+}
+
+void ATopDownCharacter::MovementTick(float DeltaSeconds)
+{
+	AddMovementInput(FVector(1.0f,0.0f,0.0f), AxisX, false);
+	AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY, false);
+	APlayerController* myController= UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if(myController)
+	{
+		FHitResult ResultHit;
+		myController->GetHitResultUnderCursorByChannel(ETraceTypeQuery::TraceTypeQuery6,false,ResultHit);
+		float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
+		SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
+	}
+	
 }
