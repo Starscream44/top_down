@@ -2,14 +2,34 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
+#include "Type.generated.h"
 
-/**
- * 
- */
-class TOPDOWN_API Type
+UENUM(BlueprintType)
+enum class EMovementState:uint8
 {
-public:
-	Type();
-	~Type();
+	Aim_state UMETA(DisplayName = "Aim State"),
+	Walk_state UMETA(DisplayName = "Walk State"),
+	Run_state UMETA(DisplayName = "Run State"),
+
+};
+
+USTRUCT(BlueprintType)
+struct FCharacterSpeed
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float WalkSpeed = 300.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float RunSpeed = 600.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float AimSpeed = 200.f;
+
+};
+
+UCLASS()
+class TOPDOWN_API UType : public UBlueprintFunctionLibrary
+{
+	GENERATED_BODY()
 };

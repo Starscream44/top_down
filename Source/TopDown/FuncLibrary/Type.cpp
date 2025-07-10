@@ -2,11 +2,5 @@
 
 
 #include "Type.h"
+#include "TopDown/TopDown.h"
 
-Type::Type()
-{
-}
-
-Type::~Type()
-{
-}

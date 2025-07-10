@@ -126,3 +126,28 @@ void ATopDownCharacter::MovementTick(float DeltaSeconds)
 	}
 	
 }
+
+void ATopDownCharacter::CharacterUpdate()
+{
+	float ResSpeed = 600.0f;
+	switch (MovementState)
+	{
+	case EMovementState::Aim_state:
+		ResSpeed = MovementInfo.AimSpeed;
+			break;
+	case EMovementState::Walk_state:
+		ResSpeed = MovementInfo.WalkSpeed;
+			break;
+	case EMovementState:: Run_state:
+		ResSpeed = MovementInfo.RunSpeed;
+			break;
+	}
+	
+	GetCharacterMovement()->MaxWalkSpeed = ResSpeed;
+}
+
+void ATopDownCharacter::ChangeMovementState(EMovementState NewMovementState)
+{
+	MovementState = NewMovementState;
+	CharacterUpdate();
+}
