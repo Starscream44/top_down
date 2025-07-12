@@ -66,31 +66,35 @@ void ATopDownCharacter::Tick(float DeltaSeconds)
 
 	if (CursorToWorld != nullptr)
 	{
-		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
+		if (CursorToWorld != nullptr)
 		{
-			if (UWorld* World = GetWorld())
+			if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
 			{
-				FHitResult HitResult;
-				FCollisionQueryParams Params(NAME_None, FCollisionQueryParams::GetUnknownStatId());
-				FVector StartLocation = TopDownCameraComponent->GetComponentLocation();
-				FVector EndLocation = TopDownCameraComponent->GetComponentRotation().Vector() * 2000.0f;
-				Params.AddIgnoredActor(this);
-				World->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, Params);
-				FQuat SurfaceRotation = HitResult.ImpactNormal.ToOrientationRotator().Quaternion();
-				CursorToWorld->SetWorldLocationAndRotation(HitResult.Location, SurfaceRotation);
+				if (UWorld* World = GetWorld())
+				{
+					FHitResult HitResult;
+					FCollisionQueryParams Params(NAME_None, FCollisionQueryParams::GetUnknownStatId());
+					FVector StartLocation = TopDownCameraComponent->GetComponentLocation();
+					FVector EndLocation = TopDownCameraComponent->GetComponentRotation().Vector() * 2000.0f;
+					Params.AddIgnoredActor(this);
+					World->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, Params);
+					FQuat SurfaceRotation = HitResult.ImpactNormal.ToOrientationRotator().Quaternion();
+					CursorToWorld->SetWorldLocationAndRotation(HitResult.Location, SurfaceRotation);
+				}
+			}
+			else if (APlayerController* PC = Cast<APlayerController>(GetController()))
+			{
+				FHitResult TraceHitResult;
+				PC->GetHitResultUnderCursor(ECC_Visibility, true, TraceHitResult);
+				FVector CursorFV = TraceHitResult.ImpactNormal;
+				FRotator CursorR = CursorFV.Rotation();
+				CursorToWorld->SetWorldLocation(TraceHitResult.Location);
+				CursorToWorld->SetWorldRotation(CursorR);
 			}
 		}
-		else if (APlayerController* PC = Cast<APlayerController>(GetController()))
-		{
-			FHitResult TraceHitResult;
-			PC->GetHitResultUnderCursor(ECC_Visibility, true, TraceHitResult);
-			FVector CursorFV = TraceHitResult.ImpactNormal;
-			FRotator CursorR = CursorFV.Rotation();
-			CursorToWorld->SetWorldLocation(TraceHitResult.Location);
-			CursorToWorld->SetWorldRotation(CursorR);
-		}
+
+		MovementTick(DeltaSeconds);
 	}
-	MovementTick(DeltaSeconds);
 }
 
 void ATopDownCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -132,22 +136,60 @@ void ATopDownCharacter::CharacterUpdate()
 	float ResSpeed = 600.0f;
 	switch (MovementState)
 	{
-	case EMovementState::Aim_state:
-		ResSpeed = MovementInfo.AimSpeed;
-			break;
-	case EMovementState::Walk_state:
-		ResSpeed = MovementInfo.WalkSpeed;
-			break;
-	case EMovementState:: Run_state:
-		ResSpeed = MovementInfo.RunSpeed;
-			break;
+	case EMovementState::Aim_State:
+		ResSpeed = MovementSpeedInfo.AimSpeedNormal;
+		break;
+	case EMovementState::AimWalk_State:
+		ResSpeed = MovementSpeedInfo.AimSpeedWalk;
+		break;
+	case EMovementState::Walk_State:
+		ResSpeed = MovementSpeedInfo.WalkSpeedNormal;
+		break;
+	case EMovementState::Run_State:
+		ResSpeed = MovementSpeedInfo.RunSpeedNormal;
+		break;
+	case EMovementState::SprintRun_State:
+		ResSpeed = MovementSpeedInfo.SprintRunSpeedRun;
+		break;
+	default:
+		break;
 	}
 	
 	GetCharacterMovement()->MaxWalkSpeed = ResSpeed;
 }
 
-void ATopDownCharacter::ChangeMovementState(EMovementState NewMovementState)
+void ATopDownCharacter::ChangeMovementState()
 {
-	MovementState = NewMovementState;
+	if (!WalkEnabled && !SprintRunEnabled && !AimEnabled)
+	{
+		MovementState = EMovementState::Run_State;
+	}
+	else
+	{
+		if (SprintRunEnabled)
+		{
+			WalkEnabled = false;
+			AimEnabled = false;
+			MovementState = EMovementState::SprintRun_State;
+		}
+		if (WalkEnabled && !SprintRunEnabled && AimEnabled)
+		{
+			MovementState = EMovementState::AimWalk_State;
+		}
+		else
+		{
+			if (WalkEnabled && !SprintRunEnabled && !AimEnabled)
+			{
+				MovementState = EMovementState::Walk_State;
+			}
+			else
+			{
+				if (!WalkEnabled && !SprintRunEnabled && AimEnabled)
+				{
+					MovementState = EMovementState::Aim_State;
+				}
+			}
+		}
+	}
 	CharacterUpdate();
 }
