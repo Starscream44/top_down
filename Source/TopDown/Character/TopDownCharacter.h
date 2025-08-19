@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "TopDown/FuncLibrary/Type.h"
+#include "TopDown/FuncLibrary/Types.h"
 #include "TopDown/Weapons/WeaponDefault.h"
 #include "TopDownCharacter.generated.h"
 

@@ -9,7 +9,7 @@
 
 ATopDownPlayerController::ATopDownPlayerController()
 {
-	bShowMouseCursor = true;
+	bShowMouseCursor = false;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
 }
 

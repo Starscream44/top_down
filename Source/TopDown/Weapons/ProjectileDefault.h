@@ -8,7 +8,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
-#include "TopDown/FuncLibrary/Type.h" 
+#include "TopDown/FuncLibrary/Types.h" 
 #include "ProjectileDefault.generated.h"
 
 UCLASS()

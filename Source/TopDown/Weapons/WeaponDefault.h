@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Components/ArrowComponent.h"
 
-#include "TopDown/FuncLibrary/Type.h" 
+#include "TopDown/FuncLibrary/Types.h" 
 #include "ProjectileDefault.h"
 #include "WeaponDefault.generated.h"
 

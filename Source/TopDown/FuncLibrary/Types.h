@@ -5,7 +5,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Engine/DataTable.h"
 
-#include "Type.generated.h"
+#include "Types.generated.h"
 
 UENUM(BlueprintType)
 enum class EMovementState : uint8
@@ -82,7 +82,7 @@ struct FWeaponDispersion
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dispersion ")
 	float Aim_StateDispersionAimRecoil = 1.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dispersion ")
-	float Aim_StateDispersionReduction = .3f;
+	float Aim_StateDispersionReduction = 0.3f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dispersion ")
 	float AimWalk_StateDispersionAimMax = 1.0f;

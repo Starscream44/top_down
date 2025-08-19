@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "TopDown/FuncLibrary/Type.h" 
+#include "TopDown/FuncLibrary/Types.h" 
 #include "Engine/DataTable.h"
 #include "TopDown/Weapons/WeaponDefault.h"
 #include "TopDownGameInstance.generated.h"
