@@ -305,9 +305,9 @@ void ATopDownCharacter::InitWeapon(FName IdWeaponName)
 
 void ATopDownCharacter::TryReloadWeapon()
 {
-	if (CurrentWeapon)
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading)
 	{
-		if (CurrentWeapon->GetWeaponRound() <= CurrentWeapon->WeaponSetting.MaxRound)
+		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound)
 			CurrentWeapon->InitReload();
 	}
 }
