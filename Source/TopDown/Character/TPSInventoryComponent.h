@@ -35,10 +35,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapons")
 		TArray<FAmmoSlot> AmmoSlots;
 
-	bool SwitchWeaponToIndex(int32 ChangeToIndex, int32 OldIndex, FAdditionalWeaponInfo OldInfo);
+	int32 MaxSlotsWeapon = 0;
 
+	bool SwitchWeaponToIndex(int32 ChangeToIndex, int32 OldIndex, FAdditionalWeaponInfo OldInfo);
+	bool SwitchWeaponToIndexByNextPreviosIndex(int32 ChangeToIndex, int32 OldIndex, FAdditionalWeaponInfo OldInfo, bool bIsForward);
+	bool SwitchWeaponByIndex(int32 IndexWeaponToChange, int32 PreviosIndex, FAdditionalWeaponInfo PreviosWeaponInfo);
+	bool GetWeaponTypeByNameWeapon(FName IdWeaponName, EWeaponType& WeaponType);
+	FName GetWeaponNameBySlotIndex(int32 IndexSlot);
 	FAdditionalWeaponInfo GetAdditionalInfoWeapon(int32 IndexWeapon);
 	int32 GetWeaponIndrxSlotByName(FName IdWeaponName);
-	void SerAdditionalInfoWeapon(int32 IndexWeapon, FAdditionalWeaponInfo NewInfo);
+	void SetAdditionalInfoWeapon(int32 IndexWeapon, FAdditionalWeaponInfo NewInfo);
 
+	UFUNCTION(BlueprintCallable)
+	void AmmoSlotChangeValue(EWeaponType TypeWeapon, int32 CoutChangeAmmo);
+	bool CheckAmmoForWeapon(EWeaponType TypeWeapon, int8& AviableAmmForWeapon);
 };

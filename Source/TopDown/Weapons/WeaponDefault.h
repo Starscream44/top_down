@@ -5,14 +5,14 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/ArrowComponent.h"
-
+#include "TopDown/FuncLibrary/Types.h"
 #include "TopDown/FuncLibrary/Types.h" 
 #include "ProjectileDefault.h"
 #include "WeaponDefault.generated.h"
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponFireStart);//ToDo Delegate on event weapon fire - Anim char, state char...
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponReloadStart, UAnimMontage*, Anim);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponReloadEnd);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponReloadEnd, bool, bIsSuccess, int32, AmmoTake);
 
 UCLASS()
 class TOPDOWN_API AWeaponDefault : public AActor
@@ -39,7 +39,7 @@ public:
 	FWeaponInfo WeaponSetting;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
-	FAdditionalWeaponInfo WeaponInfo;
+	FAdditionalWeaponInfo AdditionalWeaponInfo;
 
 protected:
 	// Called when the game starts or when spawned
@@ -55,6 +55,8 @@ public:
 
 	void WeaponInit();
 
+	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLogic")
 	bool WeaponFiring = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReloadLogic")
@@ -64,6 +66,8 @@ public:
 	void SetWeaponStateFire(bool bIsFire);
 
 	bool CheckWeaponCanFire();
+	bool CheckWeaponCanReload();
+	void CancelReload();
 
 	FProjectileInfo GetProjectile();
 

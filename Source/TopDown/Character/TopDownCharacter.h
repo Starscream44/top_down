@@ -15,6 +15,21 @@ class ATopDownCharacter : public ACharacter
 protected:
 	virtual void BeginPlay() override;
 
+	void TrySwitchNextWeapon();
+	void TrySwitchPreviosWeapon();
+
+	template<int32 Id>
+	void TKeyPressed()
+	{
+		TrySwitchWeaponToIndexByKeyInput(Id);
+	}
+
+	AWeaponDefault* CurrentWeapon = nullptr;
+
+	int32 CurrentIndexWeapon = 0;
+
+
+
 public:
 	ATopDownCharacter();
 
@@ -30,6 +45,41 @@ public:
 	/** Returns CursorToWorld subobject **/
 	//FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
 
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
+	class UTPSInventoryComponent* InventoryComponent;
+
+
+	UFUNCTION()
+	void InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 NewCurrentIndexWeapon);
+	void TryReloadWeapon();
+	UFUNCTION()
+	void WeaponFireStart(UAnimMontage* Anim);
+	UFUNCTION()
+	void WeaponReloadStart(UAnimMontage* Anim);
+	UFUNCTION()
+	void WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake);
+	//
+	bool TrySwitchWeaponToIndexByKeyInput(int32 ToIndex);
+	void DropCurrentWeapon();
+	UFUNCTION(BlueprintNativeEvent)
+	void WeaponReloadStart_BP(UAnimMontage* Anim);
+	UFUNCTION(BlueprintNativeEvent)
+	void WeaponReloadEnd_BP(bool bIsSuccess);
+	UFUNCTION(BlueprintNativeEvent)
+	void WeaponFireStart_BP(UAnimMontage* Anim);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	AWeaponDefault* GetCurrentWeapon();
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	UDecalComponent* GetCursorToWorld();
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	EMovementState GetMovementState();
+	//UFUNCTION(BlueprintCallable, BlueprintPure)
+	//TArray<UTPS_StateEffect*> GetCurrentEffectsOnChar();
+	//UFUNCTION(BlueprintCallable, BlueprintPure)
+	int32 GetCurrentWeaponIndex();
+
 private:
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -42,6 +92,15 @@ private:
 	/** A decal that projects to the cursor location. */
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	//class UDecalComponent* CursorToWorld;
+
+	
+
+
+
+
+
+
+
 
 public:
 	//Cursor
@@ -63,9 +122,6 @@ public:
 	bool WalkEnabled = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool AimEnabled = false;
-
-	//Weapon	
-	AWeaponDefault* CurrentWeapon = nullptr;
 
 	//for demo 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Demo")
@@ -98,23 +154,22 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ChangeMovementState();
 
-	UFUNCTION(BlueprintCallable)
-	AWeaponDefault* GetCurrentWeapon();
-	UFUNCTION(BlueprintCallable)
-	void InitWeapon(FName IdWeaponName);
-	UFUNCTION(BlueprintCallable)
-	void TryReloadWeapon();
-	UFUNCTION()
-	void WeaponReloadStart(UAnimMontage* Anim);
-	UFUNCTION()
-	void WeaponReloadEnd();
-	UFUNCTION(BlueprintNativeEvent)
-	void WeaponReloadStart_BP(UAnimMontage* Anim);
-	UFUNCTION(BlueprintNativeEvent)
-	void WeaponReloadEnd_BP();
-
-	UFUNCTION(BlueprintCallable)
-	UDecalComponent* GetCursorToWorld();
+	//UFUNCTION(BlueprintCallable)
+	//AWeaponDefault* GetCurrentWeapon();
+	//UFUNCTION(BlueprintCallable)
+	//void InitWeapon(FName IdWeaponName);
+	//UFUNCTION(BlueprintCallable)
+	//void TryReloadWeapon();
+	//UFUNCTION()
+	//void WeaponReloadStart(UAnimMontage* Anim);
+	//UFUNCTION()
+	//void WeaponReloadEnd();
+	//UFUNCTION(BlueprintNativeEvent)
+	//void WeaponReloadStart_BP(UAnimMontage* Anim);
+	//UFUNCTION(BlueprintNativeEvent)
+	//void WeaponReloadEnd_BP();
+	//UFUNCTION(BlueprintCallable)
+	//UDecalComponent* GetCursorToWorld();
 };
 
 

@@ -13,6 +13,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
+#include "TopDown/Weapons/ProjectileDefault.h"
+#include "TopDown/Character/TPSInventoryComponent.h"
 #include "TopDown/Game/TopDownGameInstance.h"
 
 ATopDownCharacter::ATopDownCharacter()
@@ -43,6 +45,13 @@ ATopDownCharacter::ATopDownCharacter()
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	InventoryComponent = CreateDefaultSubobject<UTPSInventoryComponent>(TEXT("InventoryComponent"));
+
+	if (InventoryComponent)
+	{
+		InventoryComponent->OnSwitchWeapon.AddDynamic(this, &ATopDownCharacter::InitWeapon);
+	}
 
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
@@ -75,8 +84,6 @@ void ATopDownCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InitWeapon(InitWeaponName);
-
 	if (CursorMaterial)
 	{
 		CurrentCursor = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), CursorMaterial, CursorSize, FVector(0));
@@ -93,6 +100,9 @@ void ATopDownCharacter::SetupPlayerInputComponent(UInputComponent* NewInputCompo
 	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Pressed, this, &ATopDownCharacter::InputAttackPressed);
 	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Released, this, &ATopDownCharacter::InputAttackReleased);
 	NewInputComponent->BindAction(TEXT("ReloadEvent"), EInputEvent::IE_Released, this, &ATopDownCharacter::TryReloadWeapon);
+
+	NewInputComponent->BindAction(TEXT("SwitchNextWeapon"), EInputEvent::IE_Pressed, this, &ATopDownCharacter::TrySwitchNextWeapon);
+	NewInputComponent->BindAction(TEXT("SwitchPreviosWeapon"), EInputEvent::IE_Pressed, this, &ATopDownCharacter::TrySwitchPreviosWeapon);
 }
 
 void ATopDownCharacter::InputAxisY(float Value)
@@ -170,6 +180,11 @@ void ATopDownCharacter::MovementTick(float DeltaTime)
 			}
 		}
 	}
+}
+
+int32 ATopDownCharacter::GetCurrentWeaponIndex()
+{
+	return CurrentIndexWeapon;
 }
 
 void ATopDownCharacter::AttackCharEvent(bool bIsFiring)
@@ -260,8 +275,14 @@ AWeaponDefault* ATopDownCharacter::GetCurrentWeapon()
 	return CurrentWeapon;
 }
 
-void ATopDownCharacter::InitWeapon(FName IdWeaponName)
+void ATopDownCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 NewCurrentIndexWeapon)
 {
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->Destroy();
+		CurrentWeapon = nullptr;
+	}
+
 	UTopDownGameInstance* myGI = Cast<UTopDownGameInstance>(GetGameInstance());
 	FWeaponInfo myWeaponInfo;
 	if (myGI)
@@ -286,11 +307,20 @@ void ATopDownCharacter::InitWeapon(FName IdWeaponName)
 					CurrentWeapon = myWeapon;
 
 					myWeapon->WeaponSetting = myWeaponInfo;
-					myWeapon->WeaponInfo.Round = myWeaponInfo.MaxRound;
+					myWeapon->AdditionalWeaponInfo.Round = myWeaponInfo.MaxRound;
 					
 
 					myWeapon->OnWeaponReloadStart.AddDynamic(this, &ATopDownCharacter::WeaponReloadStart);
 					myWeapon->OnWeaponReloadEnd.AddDynamic(this, &ATopDownCharacter::WeaponReloadEnd);
+
+					//myWeapon->OnWeaponFireStart.AddDynamic(this, &ATopDownCharacter::WeaponFireStart);
+
+					// after switch try reload weapon if needed
+					//if (CurrentWeapon->GetWeaponRound() <= 0 && CurrentWeapon->CheckCanWeaponReload())
+						//CurrentWeapon->InitReload();
+
+					//if (InventoryComponent)
+						//InventoryComponent->OnWeaponAmmoAviable.Broadcast(myWeapon->WeaponSetting.WeaponType);
 				}
 			}
 		}
@@ -305,29 +335,91 @@ void ATopDownCharacter::InitWeapon(FName IdWeaponName)
 
 void ATopDownCharacter::TryReloadWeapon()
 {
+}
+
+/*void ATopDownCharacter::TryReloadWeapon()
+{
 	if (CurrentWeapon && !CurrentWeapon->WeaponReloading)
 	{
-		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound)
+		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound && CurrentWeapon->CheckCanWeaponReload())
 			CurrentWeapon->InitReload();
 	}
-}
+}*/
 
 void ATopDownCharacter::WeaponReloadStart(UAnimMontage* Anim)
 {
 	WeaponReloadStart_BP(Anim);
 }
 
-void ATopDownCharacter::WeaponReloadEnd()
+void ATopDownCharacter::WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake)
 {
-	WeaponReloadEnd_BP();
 }
+
+/*void ATopDownCharacter::WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake)
+{
+	if (InventoryComponent && CurrentWeapon)
+	{
+		InventoryComponent->AmmoSlotChangeValue(CurrentWeapon->WeaponSetting.WeaponType, AmmoTake);
+		InventoryComponent->SetAdditionalInfoWeapon(CurrentIndexWeapon, CurrentWeapon->AdditionalWeaponInfo);
+	}
+	WeaponReloadEnd_BP(bIsSuccess);
+}*/
+
+bool ATopDownCharacter::TrySwitchWeaponToIndexByKeyInput(int32 ToIndex)
+{
+	bool bIsSuccess = false;
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlots.IsValidIndex(ToIndex))
+	{
+		if (CurrentIndexWeapon != ToIndex && InventoryComponent)
+		{
+			int32 OldIndex = CurrentIndexWeapon;
+			FAdditionalWeaponInfo OldInfo;
+
+			if (CurrentWeapon)
+			{
+				OldInfo = CurrentWeapon->AdditionalWeaponInfo;
+				if (CurrentWeapon->WeaponReloading)
+					CurrentWeapon->CancelReload();
+			}
+
+			bIsSuccess = InventoryComponent->SwitchWeaponByIndex(ToIndex, OldIndex, OldInfo);
+		}
+	}
+	return bIsSuccess;
+}
+
+void ATopDownCharacter::DropCurrentWeapon()
+{
+}
+
+
+/*void ATopDownCharacter::DropCurrentWeapon()
+{
+	if (InventoryComponent)
+	{
+		FDropItem ItemInfo;
+		InventoryComponent->DropWeapobByIndex(CurrentIndexWeapon, ItemInfo);
+	}
+}*/
 
 void ATopDownCharacter::WeaponReloadStart_BP_Implementation(UAnimMontage* Anim)
 {
 	// in BP
 }
 
-void ATopDownCharacter::WeaponReloadEnd_BP_Implementation()
+void ATopDownCharacter::WeaponReloadEnd_BP_Implementation(bool bIsSuccess)
+{
+	// in BP
+}
+
+void ATopDownCharacter::WeaponFireStart(UAnimMontage* Anim)
+{
+	if (InventoryComponent && CurrentWeapon)
+		InventoryComponent->SetAdditionalInfoWeapon(CurrentIndexWeapon, CurrentWeapon->AdditionalWeaponInfo);
+	WeaponFireStart_BP(Anim);
+}
+
+void ATopDownCharacter::WeaponFireStart_BP_Implementation(UAnimMontage* Anim)
 {
 	// in BP
 }
@@ -336,4 +428,57 @@ UDecalComponent* ATopDownCharacter::GetCursorToWorld()
 {
 	return CurrentCursor;
 }
+
+EMovementState ATopDownCharacter::GetMovementState()
+{
+	return EMovementState();
+}
+
+void ATopDownCharacter::TrySwitchNextWeapon()
+{
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlots.Num() > 1)
+	{
+		//We have more then one weapon go switch
+		int8 OldIndex = CurrentIndexWeapon;
+		FAdditionalWeaponInfo OldInfo;
+		if (CurrentWeapon)
+		{
+			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
+			if (CurrentWeapon->WeaponReloading)
+				CurrentWeapon->CancelReload();
+		}
+
+		if (InventoryComponent)
+		{
+			if (InventoryComponent->SwitchWeaponToIndexByNextPreviosIndex(CurrentIndexWeapon + 1, OldIndex, OldInfo, true))
+			{
+			}
+		}
+	}
+}
+
+void ATopDownCharacter::TrySwitchPreviosWeapon()
+{
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlots.Num() > 1)
+	{
+		//We have more then one weapon go switch
+		int8 OldIndex = CurrentIndexWeapon;
+		FAdditionalWeaponInfo OldInfo;
+		if (CurrentWeapon)
+		{
+			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
+			if (CurrentWeapon->WeaponReloading)
+				CurrentWeapon->CancelReload();
+		}
+
+		if (InventoryComponent)
+		{
+			//InventoryComponent->SetAdditionalInfoWeapon(OldIndex, GetCurrentWeapon()->AdditionalWeaponInfo);
+			if (InventoryComponent->SwitchWeaponToIndexByNextPreviosIndex(CurrentIndexWeapon - 1, OldIndex, OldInfo, false))
+			{
+			}
+		}
+	}
+}
+
 
