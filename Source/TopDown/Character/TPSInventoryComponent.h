@@ -8,6 +8,11 @@
 #include "TPSInventoryComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSwitchWeapon, FName, WeaponIdName, FAdditionalWeaponInfo, WeaponAdditionalInfo, int32, NewCurrentIndexWeapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAmmoChange, EWeaponType, TypeAmmo, int32, Cout);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponAmmoAviable, EWeaponType, WeaponType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponAmmoEmpty, EWeaponType, WeaponType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponNotHaveRound, int32, IndexSlotWeapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponHaveRound, int32, IndexSlotWeapon);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class TOPDOWN_API UTPSInventoryComponent : public UActorComponent
@@ -20,6 +25,23 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnSwitchWeapon OnSwitchWeapon;
+
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
+	//Event on change ammo in slots by weaponType
+	FOnAmmoChange OnAmmoChange;
+
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
+	FOnWeaponAmmoAviable OnWeaponAmmoAviable;
+
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
+	FOnWeaponAmmoEmpty OnWeaponAmmoEmpty;
+
+	//Event current weapon not have additional_Rounds 
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
+	FOnWeaponNotHaveRound OnWeaponNotHaveRound;
+	//Event current weapon have additional_Rounds 
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
+	FOnWeaponHaveRound OnWeaponHaveRound;
 
 protected:
 	// Called when the game starts
@@ -41,12 +63,16 @@ public:
 	bool SwitchWeaponToIndexByNextPreviosIndex(int32 ChangeToIndex, int32 OldIndex, FAdditionalWeaponInfo OldInfo, bool bIsForward);
 	bool SwitchWeaponByIndex(int32 IndexWeaponToChange, int32 PreviosIndex, FAdditionalWeaponInfo PreviosWeaponInfo);
 	bool GetWeaponTypeByNameWeapon(FName IdWeaponName, EWeaponType& WeaponType);
+	bool GetWeaponTypeByIndexSlot(int32 IndexSlot, EWeaponType& WeaponType);
 	FName GetWeaponNameBySlotIndex(int32 IndexSlot);
 	FAdditionalWeaponInfo GetAdditionalInfoWeapon(int32 IndexWeapon);
-	int32 GetWeaponIndrxSlotByName(FName IdWeaponName);
+	int32 GetWeaponIndexSlotByName(FName IdWeaponName);
 	void SetAdditionalInfoWeapon(int32 IndexWeapon, FAdditionalWeaponInfo NewInfo);
-
+	
 	UFUNCTION(BlueprintCallable)
 	void AmmoSlotChangeValue(EWeaponType TypeWeapon, int32 CoutChangeAmmo);
-	bool CheckAmmoForWeapon(EWeaponType TypeWeapon, int8& AviableAmmForWeapon);
+	bool CheckAmmoForWeapon(EWeaponType TypeWeapon, int8& AvailableAmmoForWeapon);
+
+	UFUNCTION(BlueprintCallable, Category = "Interface")
+	void DropWeaponByIndex(int32 ByIndex, FDropItem& DropItemInfo);
 };

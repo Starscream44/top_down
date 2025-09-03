@@ -6,13 +6,13 @@
 #include "GameFramework/Actor.h"
 #include "Components/ArrowComponent.h"
 #include "TopDown/FuncLibrary/Types.h"
-#include "TopDown/FuncLibrary/Types.h" 
 #include "ProjectileDefault.h"
 #include "WeaponDefault.generated.h"
 
-//DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponFireStart);//ToDo Delegate on event weapon fire - Anim char, state char...
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponFireStart, UAnimMontage*, Anim);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponReloadStart, UAnimMontage*, Anim);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponReloadEnd, bool, bIsSuccess, int32, AmmoTake);
+
 
 UCLASS()
 class TOPDOWN_API AWeaponDefault : public AActor
@@ -25,6 +25,7 @@ public:
 
 	FOnWeaponReloadEnd OnWeaponReloadEnd;
 	FOnWeaponReloadStart OnWeaponReloadStart;
+	FOnWeaponFireStart OnWeaponFireStart;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Components)
 	class USceneComponent* SceneComponent = nullptr;
@@ -68,6 +69,9 @@ public:
 	bool CheckWeaponCanFire();
 	bool CheckWeaponCanReload();
 	void CancelReload();
+	
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	bool CheckCanWeaponReload();
 
 	FProjectileInfo GetProjectile();
 
@@ -102,6 +106,9 @@ public:
 	int32 GetWeaponRound();
 	void InitReload();
 	void FinishReload();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	bool DropClipFlag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 	bool ShowDebug = false;

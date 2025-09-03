@@ -313,14 +313,14 @@ void ATopDownCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo Wea
 					myWeapon->OnWeaponReloadStart.AddDynamic(this, &ATopDownCharacter::WeaponReloadStart);
 					myWeapon->OnWeaponReloadEnd.AddDynamic(this, &ATopDownCharacter::WeaponReloadEnd);
 
-					//myWeapon->OnWeaponFireStart.AddDynamic(this, &ATopDownCharacter::WeaponFireStart);
+					myWeapon->OnWeaponFireStart.AddDynamic(this, &ATopDownCharacter::WeaponFireStart);
 
-					// after switch try reload weapon if needed
-					//if (CurrentWeapon->GetWeaponRound() <= 0 && CurrentWeapon->CheckCanWeaponReload())
-						//CurrentWeapon->InitReload();
+					//after switch try reload weapon if needed
+					if (CurrentWeapon->GetWeaponRound() <= 0 && CurrentWeapon->CheckCanWeaponReload())
+						CurrentWeapon->InitReload();
 
-					//if (InventoryComponent)
-						//InventoryComponent->OnWeaponAmmoAviable.Broadcast(myWeapon->WeaponSetting.WeaponType);
+					if (InventoryComponent)
+						InventoryComponent->OnWeaponAmmoAviable.Broadcast(myWeapon->WeaponSetting.WeaponType);
 				}
 			}
 		}
@@ -333,18 +333,16 @@ void ATopDownCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo Wea
 
 }
 
-void ATopDownCharacter::TryReloadWeapon()
-{
-}
 
-/*void ATopDownCharacter::TryReloadWeapon()
+
+void ATopDownCharacter::TryReloadWeapon()
 {
 	if (CurrentWeapon && !CurrentWeapon->WeaponReloading)
 	{
 		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound && CurrentWeapon->CheckCanWeaponReload())
 			CurrentWeapon->InitReload();
 	}
-}*/
+}
 
 void ATopDownCharacter::WeaponReloadStart(UAnimMontage* Anim)
 {
@@ -353,17 +351,13 @@ void ATopDownCharacter::WeaponReloadStart(UAnimMontage* Anim)
 
 void ATopDownCharacter::WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake)
 {
-}
-
-/*void ATopDownCharacter::WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake)
-{
 	if (InventoryComponent && CurrentWeapon)
 	{
 		InventoryComponent->AmmoSlotChangeValue(CurrentWeapon->WeaponSetting.WeaponType, AmmoTake);
 		InventoryComponent->SetAdditionalInfoWeapon(CurrentIndexWeapon, CurrentWeapon->AdditionalWeaponInfo);
 	}
 	WeaponReloadEnd_BP(bIsSuccess);
-}*/
+}
 
 bool ATopDownCharacter::TrySwitchWeaponToIndexByKeyInput(int32 ToIndex)
 {
@@ -390,17 +384,12 @@ bool ATopDownCharacter::TrySwitchWeaponToIndexByKeyInput(int32 ToIndex)
 
 void ATopDownCharacter::DropCurrentWeapon()
 {
-}
-
-
-/*void ATopDownCharacter::DropCurrentWeapon()
-{
 	if (InventoryComponent)
 	{
 		FDropItem ItemInfo;
-		InventoryComponent->DropWeapobByIndex(CurrentIndexWeapon, ItemInfo);
+		InventoryComponent->DropWeaponByIndex(CurrentIndexWeapon, ItemInfo);
 	}
-}*/
+}
 
 void ATopDownCharacter::WeaponReloadStart_BP_Implementation(UAnimMontage* Anim)
 {
@@ -473,7 +462,7 @@ void ATopDownCharacter::TrySwitchPreviosWeapon()
 
 		if (InventoryComponent)
 		{
-			//InventoryComponent->SetAdditionalInfoWeapon(OldIndex, GetCurrentWeapon()->AdditionalWeaponInfo);
+			InventoryComponent->SetAdditionalInfoWeapon(OldIndex, GetCurrentWeapon()->AdditionalWeaponInfo);
 			if (InventoryComponent->SwitchWeaponToIndexByNextPreviosIndex(CurrentIndexWeapon - 1, OldIndex, OldInfo, false))
 			{
 			}

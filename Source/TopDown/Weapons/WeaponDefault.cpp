@@ -5,6 +5,8 @@
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "TopDown/Character/TPSInventoryComponent.h"
+
 
 // Sets default values
 AWeaponDefault::AWeaponDefault()
@@ -333,7 +335,7 @@ void AWeaponDefault::FinishReload()
 	WeaponReloading = false;
 	AdditionalWeaponInfo.Round = WeaponSetting.MaxRound;
 
-	//OnWeaponReloadEnd.Broadcast();
+	OnWeaponReloadEnd.Broadcast(true,0);
 }
 
 void AWeaponDefault::CancelReload()
@@ -342,8 +344,32 @@ void AWeaponDefault::CancelReload()
 	if (SkeletalMeshWeapon && SkeletalMeshWeapon->GetAnimInstance())
 		SkeletalMeshWeapon->GetAnimInstance()->StopAllMontages(0.15f);
 
-	//OnWeaponReloadEnd.Broadcast(false, 0);
-	//DropClipFlag = false;
+	OnWeaponReloadEnd.Broadcast(false, 0);
+	DropClipFlag = false;
+}
+
+bool AWeaponDefault::CheckCanWeaponReload()
+{
+	bool result = true;
+	if (GetOwner())
+	{
+		UTPSInventoryComponent* MyInv = Cast<UTPSInventoryComponent>(GetOwner()->GetComponentByClass(UTPSInventoryComponent::StaticClass()));
+		if (MyInv)
+		{
+			int8 AviableAmmoForWeapon;
+			if (!MyInv->CheckAmmoForWeapon(WeaponSetting.WeaponType, AviableAmmoForWeapon))
+			{
+				result = false;
+				//MyInv->OnWeaponNotHaveRound.Broadcast(MyInv->GetWeaponIndexSlotByName(IdWeaponName));
+			}
+			else
+			{
+				//MyInv->OnWeaponHaveRound.Broadcast(MyInv->GetWeaponIndexSlotByName(IdWeaponName));
+			}
+		}
+	}
+
+	return result;
 }
 
 

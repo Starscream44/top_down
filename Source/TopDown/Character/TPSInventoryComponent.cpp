@@ -296,8 +296,8 @@ bool UTPSInventoryComponent::SwitchWeaponByIndex(int32 IndexWeaponToChange, int3
 		EWeaponType ToSwitchWeaponType;
 		if (GetWeaponTypeByNameWeapon(ToSwitchIdWeapon, ToSwitchWeaponType))
 		{
-			int8 AviableAmmoForWeapon = -1;
-			if (CheckAmmoForWeapon(ToSwitchWeaponType, AviableAmmoForWeapon))
+			int8 AvailableAmmoForWeapon = -1;
+			if (CheckAmmoForWeapon(ToSwitchWeaponType, AvailableAmmoForWeapon))
 			{
 
 			}
@@ -305,16 +305,6 @@ bool UTPSInventoryComponent::SwitchWeaponByIndex(int32 IndexWeaponToChange, int3
 		bIsSuccess = true;
 	}
 	return bIsSuccess;
-}
-
-bool UTPSInventoryComponent::GetWeaponTypeByNameWeapon(FName IdWeaponName, EWeaponType& WeaponType)
-{
-	return false;
-}
-
-FName UTPSInventoryComponent::GetWeaponNameBySlotIndex(int32 IndexSlot)
-{
-	return FName();
 }
 
 FAdditionalWeaponInfo UTPSInventoryComponent::GetAdditionalInfoWeapon(int32 IndexWeapon)
@@ -342,20 +332,63 @@ FAdditionalWeaponInfo UTPSInventoryComponent::GetAdditionalInfoWeapon(int32 Inde
 	return result;
 }
 
-void UTPSInventoryComponent::SetAdditionalInfoWeapon(int32 IndexWeapon, FAdditionalWeaponInfo NewInfo)
-{
-}
 
 void UTPSInventoryComponent::AmmoSlotChangeValue(EWeaponType TypeWeapon, int32 CoutChangeAmmo)
 {
+	bool bIsFind = false;
+	int8 i = 0;
+	while (i < AmmoSlots.Num() && !bIsFind)
+	{
+		if (AmmoSlots[i].WeaponType == TypeWeapon)
+		{
+			AmmoSlots[i].Cout += CoutChangeAmmo;
+			if (AmmoSlots[i].Cout > AmmoSlots[i].MaxCout)
+				AmmoSlots[i].Cout = AmmoSlots[i].MaxCout;
+
+			OnAmmoChange.Broadcast(AmmoSlots[i].WeaponType, AmmoSlots[i].Cout);
+
+			bIsFind = true;
+		}
+		i++;
+	}
 }
 
-bool UTPSInventoryComponent::CheckAmmoForWeapon(EWeaponType TypeWeapon, int8& AviableAmmForWeapon)
+bool UTPSInventoryComponent::CheckAmmoForWeapon(EWeaponType TypeWeapon, int8& AvailableAmmoForWeapon)
 {
+	AvailableAmmoForWeapon = 0;
+	bool bIsFind = false;
+	int8 i = 0;
+	while (i < AmmoSlots.Num() && !bIsFind)
+	{
+		if (AmmoSlots[i].WeaponType == TypeWeapon)
+		{
+			bIsFind = true;
+			AvailableAmmoForWeapon = AmmoSlots[i].Cout;
+			if (AmmoSlots[i].Cout > 0)
+			{
+				return true;
+			}
+		}
+		i++;
+	}
+
+	if (AvailableAmmoForWeapon <= 0)
+	{
+		OnWeaponAmmoEmpty.Broadcast(TypeWeapon);
+	}
+	else
+	{
+		OnWeaponAmmoAviable.Broadcast(TypeWeapon);
+	}
+
 	return false;
 }
 
-/*int32 UTPSInventoryComponent::GetWeaponIndexSlotByName(FName IdWeaponName)
+void UTPSInventoryComponent::DropWeaponByIndex(int32 ByIndex, FDropItem& DropItemInfo)
+{
+}
+
+int32 UTPSInventoryComponent::GetWeaponIndexSlotByName(FName IdWeaponName)
 {
 	int32 result = -1;
 	int8 i = 0;
@@ -370,9 +403,9 @@ bool UTPSInventoryComponent::CheckAmmoForWeapon(EWeaponType TypeWeapon, int8& Av
 		i++;
 	}
 	return result;
-}*/
+}
 
-/*FName UTPSInventoryComponent::GetWeaponNameBySlotIndex(int32 indexSlot)
+FName UTPSInventoryComponent::GetWeaponNameBySlotIndex(int32 indexSlot)
 {
 	FName result;
 
@@ -385,14 +418,14 @@ bool UTPSInventoryComponent::CheckAmmoForWeapon(EWeaponType TypeWeapon, int8& Av
 		UE_LOG(LogTemp, Warning, TEXT("UTPSInventoryComponent::GetWeaponNameBySlotIndex - Not Correct index Weapon  - %d"), indexSlot);
 	}
 	return result;
-}*/
+}
 
-/*bool UTPSInventoryComponent::GetWeaponTypeByIndexSlot(int32 IndexSlot, EWeaponType& WeaponType)
+bool UTPSInventoryComponent::GetWeaponTypeByIndexSlot(int32 IndexSlot, EWeaponType& WeaponType)
 {
 	bool bIsFind = false;
 	FWeaponInfo OutInfo;
 	WeaponType = EWeaponType::RifleType;
-	UTPSGameInstance* myGI = Cast<UTPSGameInstance>(GetWorld()->GetGameInstance());
+	UTopDownGameInstance* myGI = Cast<UTopDownGameInstance>(GetWorld()->GetGameInstance());
 	if (myGI)
 	{
 		if (WeaponSlots.IsValidIndex(IndexSlot))
@@ -403,14 +436,14 @@ bool UTPSInventoryComponent::CheckAmmoForWeapon(EWeaponType TypeWeapon, int8& Av
 		}
 	}
 	return bIsFind;
-}*/
+}
 
-/*bool UTPSInventoryComponent::GetWeaponTypeByNameWeapon(FName IdWeaponName, EWeaponType& WeaponType)
+bool UTPSInventoryComponent::GetWeaponTypeByNameWeapon(FName IdWeaponName, EWeaponType& WeaponType)
 {
 	bool bIsFind = false;
 	FWeaponInfo OutInfo;
 	WeaponType = EWeaponType::RifleType;
-	UTPSGameInstance* myGI = Cast<UTPSGameInstance>(GetWorld()->GetGameInstance());
+	UTopDownGameInstance* myGI = Cast<UTopDownGameInstance>(GetWorld()->GetGameInstance());
 	if (myGI)
 	{
 		myGI->GetWeaponInfoByName(IdWeaponName, OutInfo);
@@ -418,9 +451,9 @@ bool UTPSInventoryComponent::CheckAmmoForWeapon(EWeaponType TypeWeapon, int8& Av
 		bIsFind = true;
 	}
 	return bIsFind;
-}*/
+}
 
-/*void UTPSInventoryComponent::SetAdditionalInfoWeapon(int32 IndexWeapon, FAdditionalWeaponInfo NewInfo)
+void UTPSInventoryComponent::SetAdditionalInfoWeapon(int32 IndexWeapon, FAdditionalWeaponInfo NewInfo)
 {
 	if (WeaponSlots.IsValidIndex(IndexWeapon))
 	{
@@ -428,12 +461,10 @@ bool UTPSInventoryComponent::CheckAmmoForWeapon(EWeaponType TypeWeapon, int8& Av
 		int8 i = 0;
 		while (i < WeaponSlots.Num() && !bIsFind)
 		{
-			if (i == IndexWeapon)
+			if (WeaponSlots[i].IndexSlot == IndexWeapon)
 			{
 				WeaponSlots[i].AdditionalInfo = NewInfo;
 				bIsFind = true;
-
-				OnWeaponAdditionalInfoChange.Broadcast(IndexWeapon, NewInfo);
 			}
 			i++;
 		}
@@ -442,6 +473,4 @@ bool UTPSInventoryComponent::CheckAmmoForWeapon(EWeaponType TypeWeapon, int8& Av
 	}
 	else
 		UE_LOG(LogTemp, Warning, TEXT("UTPSInventoryComponent::SetAdditionalInfoWeapon - Not Correct index Weapon - %d"), IndexWeapon);
-}*/
-
-
+}
